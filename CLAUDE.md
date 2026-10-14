@@ -140,14 +140,50 @@ runs for that app, so note the replacement in this file.
   with the caption above the phone. The page picks the cut in its script by viewport width.
 - **Videos load only when scrolled to**, muted, looping, and stop when scrolled away; with
   "reduce motion" set they wait for a tap. No analytics, no fonts from a CDN, no framework.
-- **Why the repo is `divertoday-site` and not `diver-today`** — the first repo's first deploy
-  timed out in GitHub's ten-minute health check of the custom domain (the domain still pointed
-  at the registrar), and GitHub then kept that deployment "in progress" for good: every later
-  deploy failed with *"due to in progress deployment. Please cancel 50d67bf… first"*, through
-  cancelling it, deleting the deployment objects and re-creating the Pages site. Moving the same
-  commits to a fresh repository deployed in a minute. `ligrimp-lang/diver-today` is archived and
-  empty of purpose; nothing points at it. Lesson: **put the CNAME file in only after the DNS
-  already resolves to GitHub**, so the health check can pass on the first deploy.
+- **Why the repo is `divertoday-site` and not `diver-today`** — the first repository's Pages
+  deployment got stuck for good. The whole story, and the way out, is the next section.
+
+## GitHub Pages: the deployment that stayed "in progress" (root cause, 2026-10-14)
+
+**Symptom.** Every `pages build and deployment` run fails after about 25 seconds in the
+"Deploy to GitHub Pages" step with
+
+    Deployment request failed for <sha> due to in progress deployment.
+    Please cancel 50d67bf810ec4ae36cabf06879441f138c65e877 first or wait for it to complete.
+
+and the domain shows GitHub's "There isn't a GitHub Pages site here" page.
+
+**Root cause.** The very first deployment of the site carried the `CNAME` file for diver.today
+while diver.today's DNS still pointed at Namecheap's parking page. GitHub's deploy step
+(`actions/deploy-pages`) health-checks the site *at its custom domain* and waits up to ten
+minutes for that check to pass. It never could, the action gave up ("Timeout reached,
+aborting!") and sent a cancel — but the Pages backend kept that deployment registered as in
+progress, and from then on refused every new deployment for that site. The lock belongs to the
+repository's Pages site; nothing in the repository's files is wrong.
+
+**What does not clear it — do not spend time on these again.**
+- `POST repos/<r>/pages/deployments/<sha>/cancel` returns 204, the status endpoint even reads
+  `deployment_cancelled`, and the lock stays.
+- `gh run rerun <id> --failed` — the re-run sits in "queued" indefinitely; `force-cancel` on
+  it answers 409.
+- Marking the `github-pages` environment deployments inactive and deleting them — succeeds,
+  lock stays.
+- `DELETE` then `POST repos/<r>/pages` to re-create the Pages site — a new certificate is
+  issued, lock stays.
+- Waiting half an hour.
+
+**What works.** A fresh repository. Pages state is per repository site, so the same commits
+pushed to `ligrimp-lang/divertoday-site`, with Pages enabled there, deployed in under a minute —
+by then the DNS already resolved to GitHub, so the health check passed on the first try. Before
+enabling Pages on the new repository, `DELETE repos/<old>/pages` on the stuck one so the domain
+is free (a custom domain can be bound to only one Pages site), then archive the old one. That is
+what `ligrimp-lang/diver-today` is: archived, superseded, nothing points at it.
+
+**Prevention — the one rule.** Put the `CNAME` file in only after the DNS already resolves to
+GitHub: `dig +short A diver.today` must list 185.199.108.153 through 185.199.111.153 first.
+A site that has to go up before its DNS exists is published without `CNAME` (it is reachable at
+`ligrimp-lang.github.io/<repo>/`) and gets the file in a second commit once the records are in.
+If the symptom above ever appears anyway, skip the cancels and go straight to the new repository.
 
 ## Not done yet / next
 
