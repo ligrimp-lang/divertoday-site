@@ -55,7 +55,7 @@ invented company; British spelling in his own text, American only where it quote
 
 ## How the videos are made (so they stay one family)
 
-Each video is a title card (icon, name, tagline), one scene per store screenshot (the phone with
+Each video opens straight on scene 1 (no title card, see below), then one scene per store screenshot (the phone with
 rounded corners and a shadow, drifting upward; a numbered teal pill, headline and subline), and
 an outro ("Free on the App Store · diver.today"), over a blurred, darkened, slowed loop of two reef
 clips from `surface_interval/reference-footage/clips/`. The look was taken from the Time to
@@ -77,8 +77,8 @@ Everything a video says and shows is one entry in the `APPS` table at the top of
 `tools/build-media.py`. Nothing is edited in a video editor; change the table, re-render, look,
 commit. Per app:
 
-- `name`, `tagline` — the title card and the outro. The tagline is the one line the video opens
-  on, so when the focus of a video changes, this line changes first.
+- `name`, `tagline` — the outro uses the name. The tagline is only drawn if a title card is switched
+  back on (`TITLE_D`, below); with the card off, the first scene's headline is the line the video opens on.
 - `scenes` — the story, in order, one tuple per scene:
   `("<screenshot stem>", "<pill>", "<headline>", "<subline>")`. The stem is a file in that app's
   `design/screenshots/<app>/` without `.png`; the pill is two or three words that get numbered
@@ -95,14 +95,14 @@ app's own repository first, with its ship tooling (`screenshots.sh`, 6.9" at 132
 `design/screenshots/<app>/`), and only then named here — the generator never captures anything
 and never reads the simulator.
 
-**To focus on another use case**: reorder the scenes so the first scene after the title is the
+**To focus on another use case**: reorder the scenes so the first scene is the
 answer that use case wants (the planners open on the dive, Weights Check on the balance,
 Surface Interval on the finished reel), drop the scenes that do not serve it, and rewrite the
-tagline. Keep six scenes or fewer: the length is 4 s + 4.6 s per scene + 3.6 s, and past 35
-seconds a muted loop on a web page is not watched.
+first headline. Keep six scenes or fewer: the length is 4.6 s per scene + 3.6 s (a title card, if
+switched on, adds its own seconds), and past 35 seconds a muted loop on a web page is not watched.
 
 **To change the look for all five at once**: `ACCENT` (the teal), `TITLE_D / SCENE_D / OUTRO_D /
-FADE` (timings), `FORMATS` (frame sizes, phone height, where the phone sits, how far it drifts),
+FADE` (timings; `TITLE_D` is 0, no title card — see below), `FORMATS` (frame sizes, phone height, where the phone sits, how far it drifts),
 `BG_CLIPS` (the background footage — after changing it run `bg` before `videos`). The phone
 bezel, corner radius and shadow are in `phone()`; the caption type sizes in `caption_layer()`.
 
@@ -118,7 +118,8 @@ the usual faults:
     ffmpeg -y -ss 6.5 -i video/surface-interval-wide.mp4 -frames:v 1 /tmp/wide.png
     ffmpeg -y -ss 6.5 -i video/surface-interval-tall.mp4 -frames:v 1 /tmp/tall.png
 
-(scene *n* starts at 4 + 4.6·(n−1) seconds; add two seconds to land past the fade). Then open
+(scene *n* starts at 4.6·(n−1) seconds; add two seconds to land past the fade; scene 1 has no
+fade-in, its first frame is the poster). Then open
 the page from `.claude/launch.json` and watch the section play at desktop and at phone width,
 commit the changed `video/` and `img/` files with the script, and push.
 
@@ -138,8 +139,16 @@ runs for that app, so note the replacement in this file.
   can replace them later by dropping files with the same names into `video/`.
 - **Two cuts per video** — a 16:9 frame is unreadable at phone width, so phones get a 4:5 cut
   with the caption above the phone. The page picks the cut in its script by viewport width.
-- **Videos load only when scrolled to**, muted, looping, and stop when scrolled away; with
-  "reduce motion" set they wait for a tap. No analytics, no fonts from a CDN, no framework.
+- **Videos load only near the viewer**, muted, looping, and stop when scrolled away; with
+  "reduce motion" set they wait for a tap. A video starts downloading when its section is within
+  about a screen and a half, so it is ready on arrival (not when "save data" is on). No analytics,
+  no fonts from a CDN, no framework.
+- **No title card, and the poster is the opening frame** (2026-10-14, Rustam: 8–10 seconds from
+  scrolling to a video until the app appeared, too long). The poster used to be cut from the title
+  card and the video opened on four more seconds of it. Now every video opens on scene 1 and the
+  poster is its first frame, so the app is on screen at once and the video fades in over an
+  identical picture. The page already shows the icon, name and sentence under the video. A title
+  card can come back with `TITLE_D` of 1.5 or more, but then the poster is the card again.
 - **Why the repo is `divertoday-site` and not `diver-today`** — the first repository's Pages
   deployment got stuck for good. The whole story, and the way out, is the next section.
 

@@ -92,7 +92,10 @@ APPS = [
          ]),
 ]
 
-TITLE_D, SCENE_D, OUTRO_D, FADE = 4.0, 4.6, 3.6, 0.6
+# TITLE_D 0 = no title card: the video opens on scene 1, the same frame as its poster, because the page
+# already shows the icon, name and sentence right under the video. A few seconds of title card made
+# viewers wait 8-10 s before the app appeared. Set it to 1.5 or more to bring a title card back.
+TITLE_D, SCENE_D, OUTRO_D, FADE = 0.0, 4.6, 3.6, 0.6
 BG_CLIPS = [f"{PROJECTS}/surface_interval/reference-footage/clips/reef-slope.mp4",
             f"{PROJECTS}/surface_interval/reference-footage/clips/turtle-slope.mp4"]
 
@@ -257,7 +260,8 @@ def build_video(app, name, fmt):
     work = os.path.join(BUILD, slug, name); os.makedirs(work, exist_ok=True)
     layers = []   # (path, start, duration, x, y_expr)
     t = 0.0
-    p = os.path.join(work, "title.png"); title_layer(fmt, app).save(p); layers.append((p, t, TITLE_D, 0, "0")); t += TITLE_D
+    if TITLE_D > 0:
+        p = os.path.join(work, "title.png"); title_layer(fmt, app).save(p); layers.append((p, t, TITLE_D, 0, "0")); t += TITLE_D
     for i, (shot, pill, head, sub) in enumerate(app["scenes"], 1):
         phone_left = (i % 2 == 0)
         ph, pad = phone(os.path.join(app["shots"], shot + ".png"), fmt["phone_h"])
@@ -278,7 +282,8 @@ def build_video(app, name, fmt):
     for k, (path, st, du, x, yexpr) in enumerate(layers, 1):
         cmd += ["-loop", "1", "-framerate", str(FPS), "-t", f"{du:.2f}", "-i", path]
         fade_out = max(du - FADE, 0)
-        fc.append(f"[{k}:v]format=rgba,fade=t=in:st=0:d={FADE}:alpha=1,fade=t=out:st={fade_out:.2f}:d={FADE}:alpha=1,"
+        fade_in = f"fade=t=in:st=0:d={FADE}:alpha=1," if st > 0 else ""   # the opening frame is never faded: it is the poster
+        fc.append(f"[{k}:v]format=rgba,{fade_in}fade=t=out:st={fade_out:.2f}:d={FADE}:alpha=1,"
                   f"tpad=start_duration={st:.2f}:start_mode=add:color=black@0.0[l{k}]")
     prev = "[bg]"
     for k, (path, st, du, x, yexpr) in enumerate(layers, 1):
@@ -293,7 +298,7 @@ def build_video(app, name, fmt):
     run(["ffmpeg", "-y", "-v", "error", "-i", master, "-vf", f"scale=-2:{fmt['out_h']}", "-an", "-c:v", "libx264", "-preset", "slow", "-crf", "25",
          "-profile:v", "high", "-level", "4.1", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-tune", "stillimage", out])
     poster_w = 1600 if W > H else 960
-    run(["ffmpeg", "-y", "-v", "error", "-ss", "2.4", "-i", master, "-frames:v", "1", "-vf", f"scale={poster_w}:-2", "-q:v", "4", os.path.join(IMG, f"{slug}-{name}-poster.jpg")])
+    run(["ffmpeg", "-y", "-v", "error", "-ss", "0", "-i", master, "-frames:v", "1", "-vf", f"scale={poster_w}:-2", "-q:v", "4", os.path.join(IMG, f"{slug}-{name}-poster.jpg")])
     print(f"{slug} {name}: {total:.1f}s ->", out)
 
 if __name__ == "__main__":
