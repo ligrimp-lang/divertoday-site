@@ -67,6 +67,63 @@ are the `APPS` table at the top of the generator; the screenshots are read from 
 Then commit and push. Check a video by pulling frames with ffmpeg and looking at them; the
 caption must never run under the phone (the wide layout keeps 820 px for a left caption).
 
+## Reworking a video (new screens, new words, another use case)
+
+Everything a video says and shows is one entry in the `APPS` table at the top of
+`tools/build-media.py`. Nothing is edited in a video editor; change the table, re-render, look,
+commit. Per app:
+
+- `name`, `tagline` — the title card and the outro. The tagline is the one line the video opens
+  on, so when the focus of a video changes, this line changes first.
+- `scenes` — the story, in order, one tuple per scene:
+  `("<screenshot stem>", "<pill>", "<headline>", "<subline>")`. The stem is a file in that app's
+  `design/screenshots/<app>/` without `.png`; the pill is two or three words that get numbered
+  ("1 · THE DIVE"); the subline may be `""` for a one-liner scene (Dive log's are).
+
+**To change the words**: edit the headline or subline in the tuple. If Rustam gives new wording,
+that is his approval — use it as given, his names and his spelling, no exclamation marks, no
+claim the screenshot behind it does not show. If the wording is also on the App Store, change it
+in the app's `caption-screenshots.swift` too, so the store and the site keep saying the same.
+
+**To change which screens**: pick other stems from the same folder (each app has five to eight
+shots; the videos use at most six). A screen that has no screenshot yet is captured in the
+app's own repository first, with its ship tooling (`screenshots.sh`, 6.9" at 1320×2868, into
+`design/screenshots/<app>/`), and only then named here — the generator never captures anything
+and never reads the simulator.
+
+**To focus on another use case**: reorder the scenes so the first scene after the title is the
+answer that use case wants (the planners open on the dive, Weights Check on the balance,
+Surface Interval on the finished reel), drop the scenes that do not serve it, and rewrite the
+tagline. Keep six scenes or fewer: the length is 4 s + 4.6 s per scene + 3.6 s, and past 35
+seconds a muted loop on a web page is not watched.
+
+**To change the look for all five at once**: `ACCENT` (the teal), `TITLE_D / SCENE_D / OUTRO_D /
+FADE` (timings), `FORMATS` (frame sizes, phone height, where the phone sits, how far it drifts),
+`BG_CLIPS` (the background footage — after changing it run `bg` before `videos`). The phone
+bezel, corner radius and shadow are in `phone()`; the caption type sizes in `caption_layer()`.
+
+Then:
+
+    python3 tools/build-media.py videos surface-interval    # both cuts and both posters of one app
+    python3 tools/build-media.py videos                     # all five, about six minutes
+
+**Look before committing.** Pull frames and view them, both cuts — a caption that wraps to
+three lines, a headline that runs under the phone, or a subline that fell off the bottom are
+the usual faults:
+
+    ffmpeg -y -ss 6.5 -i video/surface-interval-wide.mp4 -frames:v 1 /tmp/wide.png
+    ffmpeg -y -ss 6.5 -i video/surface-interval-tall.mp4 -frames:v 1 /tmp/tall.png
+
+(scene *n* starts at 4 + 4.6·(n−1) seconds; add two seconds to land past the fade). Then open
+the page from `.claude/launch.json` and watch the section play at desktop and at phone width,
+commit the changed `video/` and `img/` files with the script, and push.
+
+**If a real screen recording should replace a generated video**: encode it to the same names
+and shapes — `video/<slug>-wide.mp4` at 1920×1080 and `video/<slug>-tall.mp4` at 864×1080
+(4:5), H.264, no audio track, `-movflags +faststart`, roughly 7 MB and 3 MB — plus the two
+posters in `img/`. The page needs no change; the generator will overwrite them the next time it
+runs for that app, so note the replacement in this file.
+
 ## What was decided and why
 
 - **GitHub Pages, not Cloudflare or Netlify** — free, already used by all five app sites, and the
