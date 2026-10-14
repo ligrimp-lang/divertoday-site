@@ -21,16 +21,20 @@ and search. **This file is the present tense; read it before changing anything.*
 
 ## The apps on the page
 
+Rustam chose this order on 2026-10-14 and it is the order on the page, in the header menu, in the
+JSON-LD list, in the `APPS` table of the generator and in the share image: Time to Surface, Surface
+Interval, Dive log, Turn Pressure, Weights Check. Change all of them together.
+
 The App Store ids, store names and the per-app sites (each app's own repo publishes its landing,
 privacy and support pages, which this page links to as "Details, support & privacy"):
 
 | App | Store name | id | Per-app site |
 |---|---|---|---|
-| Turn Pressure | Turn Pressure – Dive Planner | 6801749776 | ligrimp-lang.github.io/turnpressure-site/ |
 | Time to Surface | Time to Surface – Deco Planner | 6803187271 | ligrimp-lang.github.io/timetosurface-site/ |
-| Weights Check | Weights Check – Dive Weighting | 6806640499 | ligrimp-lang.github.io/weightscheck-site/ |
 | Surface Interval | Surface Interval – Dive Videos (iPhone and Mac, one record) | 6813333816 | ligrimp-lang.github.io/surfaceinterval-site/ |
 | Dive log | Dive log – Computer Logbook | 6822452235 | ligrimp-lang.github.io/divelog-site/ |
+| Turn Pressure | Turn Pressure – Dive Planner | 6801749776 | ligrimp-lang.github.io/turnpressure-site/ |
+| Weights Check | Weights Check – Dive Weighting | 6806640499 | ligrimp-lang.github.io/weightscheck-site/ |
 
 Verify a listing with `curl "https://itunes.apple.com/lookup?id=<id>"` rather than from memory.
 **Dive log went into App Review on 2026-10-14**; the page shows its button as "Coming soon on the
