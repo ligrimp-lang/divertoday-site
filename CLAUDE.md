@@ -149,6 +149,11 @@ runs for that app, so note the replacement in this file.
   poster is its first frame, so the app is on screen at once and the video fades in over an
   identical picture. The page already shows the icon, name and sentence under the video. A title
   card can come back with `TITLE_D` of 1.5 or more, but then the poster is the card again.
+- **The top bar is sticky on desktop only** (2026-10-14, Rustam: on iPhone the bar with the site name
+  stuck a hand's width below the top edge, the page showing above it; "either at the very top or not
+  at all"). iOS Safari keeps its own address bar over the top of the screen and parks a sticky bar
+  under it. On phones (`max-width: 760px`, and a phone held sideways) the bar is `position: static`
+  and scrolls away; the menu links are hidden there anyway, so the bar is only the site name.
 - **Why the repo is `divertoday-site` and not `diver-today`** — the first repository's Pages
   deployment got stuck for good. The whole story, and the way out, is the next section.
 
