@@ -2,7 +2,7 @@
 
 One page for the five dive apps: Turn Pressure, Time to Surface, Weights Check, Surface
 Interval and Dive log. A full-width video of each app in action, one line on what it does,
-and its App Store link. Served by GitHub Pages from `main` / root (`ligrimp-lang/diver-today`),
+and its App Store link. Served by GitHub Pages from `main` / root (`ligrimp-lang/divertoday-site`),
 custom domain `diver.today` (the `CNAME` file). No build step: `index.html`, `style.css`
 and the files under `img/` and `video/` are the site.
 

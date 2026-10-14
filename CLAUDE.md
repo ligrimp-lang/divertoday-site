@@ -14,7 +14,7 @@ and search. **This file is the present tense; read it before changing anything.*
 | The page | `index.html` (one file, inline script), `style.css` (`?v=` on its link is the cache-buster: bump it when the CSS changes) |
 | Media | `img/` icons at 512, favicon, `og.png` (1200×630), posters; `video/` ten MP4s, `<app>-wide.mp4` (1920×1080, desktops) and `<app>-tall.mp4` (864×1080, 4:5, phones) |
 | Generator | `tools/build-media.py` — makes all of `img/` and `video/` from the app repositories beside this one. Needs ffmpeg and Pillow, both on this Mac. `build/` is its scratch, git-ignored |
-| Hosting | GitHub Pages, repo `ligrimp-lang/diver-today`, branch `main`, folder `/`, no build step (`.nojekyll`). Push to `main` and it deploys in about a minute |
+| Hosting | GitHub Pages, repo `ligrimp-lang/divertoday-site`, branch `main`, folder `/`, no build step (`.nojekyll`). Push to `main` and it deploys in about a minute |
 | Domain | `diver.today` at Namecheap. Advanced DNS holds four `A` records on `@` → 185.199.108.153 / .109 / .110 / .111 and `CNAME www` → `ligrimp-lang.github.io` (set by Rustam, 2026-10-14). The `CNAME` file in this repo tells GitHub the domain |
 | Search | `robots.txt`, `sitemap.xml`, canonical `https://diver.today/`, JSON-LD `WebSite` + `ItemList` of five `SoftwareApplication`s, Open Graph and Twitter cards |
 | Preview | `.claude/launch.json` starts `python3 -m http.server 8765` for the browser pane |
@@ -79,17 +79,19 @@ caption must never run under the phone (the wide layout keeps 820 px for a left 
   with the caption above the phone. The page picks the cut in its script by viewport width.
 - **Videos load only when scrolled to**, muted, looping, and stop when scrolled away; with
   "reduce motion" set they wait for a tap. No analytics, no fonts from a CDN, no framework.
-- **The custom domain and the first deploy** — GitHub's deploy health-checks the custom domain
-  and times out after ten minutes while the domain still points at the registrar. The CNAME
-  file was held back until the DNS was in, then restored. If a deploy ever fails with
-  "in progress deployment", cancel the stuck one:
-  `gh api -X POST repos/ligrimp-lang/diver-today/pages/deployments/<sha>/cancel`, then
-  `gh run rerun <run-id> --failed`.
+- **Why the repo is `divertoday-site` and not `diver-today`** — the first repo's first deploy
+  timed out in GitHub's ten-minute health check of the custom domain (the domain still pointed
+  at the registrar), and GitHub then kept that deployment "in progress" for good: every later
+  deploy failed with *"due to in progress deployment. Please cancel 50d67bf… first"*, through
+  cancelling it, deleting the deployment objects and re-creating the Pages site. Moving the same
+  commits to a fresh repository deployed in a minute. `ligrimp-lang/diver-today` is archived and
+  empty of purpose; nothing points at it. Lesson: **put the CNAME file in only after the DNS
+  already resolves to GitHub**, so the health check can pass on the first deploy.
 
 ## Not done yet / next
 
 - "Enforce HTTPS" in the Pages settings, once GitHub has issued the certificate for the domain
-  (`gh api -X PUT repos/ligrimp-lang/diver-today/pages -F https_enforced=true`).
+  (`gh api -X PUT repos/ligrimp-lang/divertoday-site/pages -F https_enforced=true`).
 - Dive log's button when it is on sale (above).
 - Submitting `https://diver.today/sitemap.xml` to Google Search Console is Rustam's, in his
   Google account; the page is ready for it.
