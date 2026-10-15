@@ -43,8 +43,28 @@ store, so when Apple approves it, remove the class and the note — nothing else
 
 ## Words on the page are the apps' approved words
 
-The subtitle under each name is the App Store subtitle; the sentence is the App Store
-promotional text (`docs/app-store-listing*.md` in each app's repo), lightly joined. The captions
+The sentence after the opening phrase is the App Store promotional text
+(`docs/app-store-listing*.md` in each app's repo), lightly joined. **The line under each name and
+the first words of each paragraph are search wording, no longer the store subtitle** (2026-10-15,
+Rustam: searchers type the problem, not the app names). Each leads with what a diver types, taken
+from the search research (`weights_check/nimbalyst-local/promotion/search-terms.txt` and
+`findability-plan-2026-09-21.md`; `turn_pressure/nimbalyst-local/plans/app-store-findability-2026-09-16.md`
+and `-09-21.md`; the Keywords and Subtitle blocks of each listing), with the claims unchanged:
+
+| App | Line under the name | Phrases carried in the paragraph |
+|---|---|---|
+| Time to Surface | Trimix deco and technical dive planner | decompression planner |
+| Surface Interval | Underwater video colour correction & reels | fix blue GoPro dive footage, one reel |
+| Dive log | Shearwater dive log app for iPhone | dive logbook, Shearwater Bluetooth import |
+| Turn Pressure | Dive planner and minimum gas calculator | scuba gas planner, no-deco calculator, turn pressure |
+| Weights Check | Scuba weight and buoyancy calculator | dive weighting |
+
+The page title, description, Open Graph and Twitter text and each JSON-LD item description carry
+the same phrases. Left out on purpose: "NDL" (the research shows the store's suggestions never offer
+it) and "how much weight for diving" (not in the research, and it would promise Weights Check's
+answer as a verdict, which it is not). The footer names GoPro's trademark because the Surface
+Interval line names GoPro. To change a phrase, change it here, in the title/description and in the
+JSON-LD together. The captions
 inside the videos are the screenshot captions each app ships to the store
 (`caption-screenshots.swift` in each repo's ship scripts). **Do not write new marketing claims
 here** — change the listing in the app's repo first, then mirror it. The app is "Weights Check"
@@ -204,5 +224,8 @@ If the symptom above ever appears anyway, skip the cancels and go straight to th
 - "Enforce HTTPS" in the Pages settings, once GitHub has issued the certificate for the domain
   (`gh api -X PUT repos/ligrimp-lang/divertoday-site/pages -F https_enforced=true`).
 - Dive log's button when it is on sale (above).
-- Submitting `https://diver.today/sitemap.xml` to Google Search Console is Rustam's, in his
-  Google account; the page is ready for it.
+- Google Search Console: not added yet. On 2026-10-15 the Claude in Chrome extension was not
+  connected, so nothing was done in his Google account. Steps: add a **URL prefix** property
+  `https://diver.today/` (not Domain, which needs a DNS record), verify with the **HTML tag**
+  method (put the `<meta name="google-site-verification" ...>` tag in the head of `index.html`,
+  push, then Verify), then submit `sitemap.xml` under Sitemaps.
