@@ -14,10 +14,11 @@ and search. **This file is the present tense; read it before changing anything.*
 | The page | `index.html` (one file, inline script), `style.css` (`?v=` on its link is the cache-buster: bump it when the CSS changes) |
 | Media | `img/` icons at 512, favicon, `og.png` (1200×630), posters; `video/` ten MP4s, `<app>-wide.mp4` (1920×1080, desktops) and `<app>-tall.mp4` (864×1080, 4:5, phones) |
 | Generator | `tools/build-media.py` — makes all of `img/` and `video/` from the app repositories beside this one. Needs ffmpeg and Pillow, both on this Mac. `build/` is its scratch, git-ignored |
-| Hosting | GitHub Pages, repo `ligrimp-lang/divertoday-site`, branch `main`, folder `/`, no build step (`.nojekyll`). Push to `main` and it deploys in about a minute |
+| Hosting | GitHub Pages, repo `ligrimp-lang/divertoday-site`, branch `main`, folder `/`. Push to `main` and it deploys in about a minute. **Everything in this repository is on the web unless `_config.yml` excludes it** — the notes (`CLAUDE.md`, `README.md`, `docs/`), `tools/` and `build/` are excluded there; add any new non-site folder to that list before committing it |
 | Domain | `diver.today` at Namecheap. Advanced DNS holds four `A` records on `@` → 185.199.108.153 / .109 / .110 / .111 and `CNAME www` → `ligrimp-lang.github.io` (set by Rustam, 2026-10-14). The `CNAME` file in this repo tells GitHub the domain |
 | Search | `robots.txt`, `sitemap.xml`, canonical `https://diver.today/`, JSON-LD `WebSite` + `ItemList` of five `SoftwareApplication`s, Open Graph and Twitter cards |
 | Preview | `.claude/launch.json` starts `python3 -m http.server 8765` for the browser pane |
+| Promotion | `docs/promotion-posts-2026-10-15.md` — where to post and the texts, in Rustam's voice, for him to post himself; not on the web |
 
 ## The apps on the page
 
