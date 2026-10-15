@@ -225,8 +225,9 @@ If the symptom above ever appears anyway, skip the cancels and go straight to th
 - "Enforce HTTPS" in the Pages settings, once GitHub has issued the certificate for the domain
   (`gh api -X PUT repos/ligrimp-lang/divertoday-site/pages -F https_enforced=true`).
 - Dive log's button when it is on sale (above).
-- Google Search Console: not added yet. On 2026-10-15 the Claude in Chrome extension was not
-  connected, so nothing was done in his Google account. Steps: add a **URL prefix** property
-  `https://diver.today/` (not Domain, which needs a DNS record), verify with the **HTML tag**
-  method (put the `<meta name="google-site-verification" ...>` tag in the head of `index.html`,
-  push, then Verify), then submit `sitemap.xml` under Sitemaps.
+- Google Search Console: **done 2026-10-15.** URL-prefix property `https://diver.today/` in
+  Rustam's Google account, verified by the HTML tag (`google-site-verification` meta in the head
+  of `index.html`; **keep it there**, removing it un-verifies the property), `sitemap.xml`
+  submitted (status Success, one page discovered) and indexing requested for the home page. The
+  home page was "Discovered, currently not indexed" until then. The Performance report there is
+  where the search queries show up, a few days after it starts to fill.
