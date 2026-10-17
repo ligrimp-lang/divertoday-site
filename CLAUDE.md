@@ -91,7 +91,10 @@ taken by `scripts/site-screenshots.sh` in the app's repo, not the App Store set.
 Blue Hole dive (273) labelled **18/45**, his gas for it (the computer logged 21/35; profile and stops
 are the computer's), and a year of **generated sample trips** (`-siteHistory YES` in
 `App/Preview/SampleDives.swift`) so Statistics draws a rate settling from about 25 to 15 L/min —
-his real export's rate is too noisy for that. The merge scene is the app's two-computer seed.
+his real export's rate is too noisy for that. The trips are at four famous sites, one per area —
+the Blue Hole (where all the Dahab dives, his five real ones too, are put), Richelieu Rock, Maaya
+Thila, Batu Bolong — because the map names only one pin of a crowd, and a sample site in Gozo once
+showed up as "Blue Hole" near Italy (Rustam, 2026-10-17). The merge scene is the app's two-computer seed.
 
 **A scene can scroll a whole page.** When a scene's stem is a folder of pieces (`00.png`, `01.png`, …
 the same screen 500 points further down each time), the generator stitches them, keeps the status
