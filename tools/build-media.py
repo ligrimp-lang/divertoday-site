@@ -10,8 +10,9 @@ Sources are the screenshots each app's ship tooling already captures for the App
 their approved captions, and the icon in each app's asset catalogue. Nothing here is edited by
 hand: change the table below, rerun, commit the outputs.
 """
-import os, sys, subprocess, math, shutil
+import os, sys, subprocess, math, shutil, glob
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
+import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECTS = os.path.dirname(ROOT)
@@ -59,14 +60,17 @@ APPS = [
          ]),
     dict(slug="dive-log", name="Dive log", tagline="Shearwater dive import for iPhone",
          icon=f"{PROJECTS}/sharewater_dive_log/App/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
-         shots=f"{PROJECTS}/sharewater_dive_log/design/screenshots/dive-log",
+         # The site's own set (scripts/site-screenshots.sh in the app's repo), not the App Store's:
+         # his Blue Hole trimix dive on 18/45, and a year of sample trips so Statistics has a trend.
+         shots=f"{PROJECTS}/sharewater_dive_log/design/screenshots/dive-log-site",
+         # Rustam's six key features, in his order (2026-10-17).
          scenes=[
-            ("1-dive", "The dive", "Everything your computer recorded", ""),
-            ("2-gas", "Gas", "Every gas, its pressures and SCR", ""),
-            ("3-log", "The log", "Named by place and time", ""),
-            ("4-sites", "Sites", "9,000 dive sites, nearest first", ""),
-            ("5-map", "The map", "Every site you dived, on one map", ""),
-            ("6-card", "The card", "A card of your dive, for social media", ""),
+            ("1-dive-page", "One page", "The whole dive on one page", "Profile, stops, every gas with its pressure and rate, as your computer logged it."),
+            ("2-log", "The log", "Super fast navigation", "Year, month, week, dive — one tap at each step."),
+            ("3-computers", "Import", "Import once, from any computer", "Bluetooth or Shearwater Cloud. A dive your backup computer logged too merges on its own."),
+            ("4-statistics", "Your SAC", "Your SAC, dive by dive and over time", "Surface consumption rate on bottom and deco gas, and its trend through your log."),
+            ("5-map", "Sites", "Every site you dived, on one map", "9,000 known dive sites to pick from, nearest first."),
+            ("6-card", "Share", "A card of your dive, for social media", "Picture or video, story-sized, every word kept in a feed post."),
          ]),
     dict(slug="turn-pressure", name="Turn Pressure", tagline="Recreational dive planner for iPhone",
          icon=f"{PROJECTS}/turn_pressure/App/Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png",
@@ -115,7 +119,7 @@ def app_icon(path, size):
     return im
 
 def phone(path, height):
-    shot = Image.open(path).convert("RGBA")
+    shot = (path if isinstance(path, Image.Image) else Image.open(path)).convert("RGBA")
     w = round(shot.width * height / shot.height)
     shot = shot.resize((w, height), Image.LANCZOS)
     r = int(height * 0.062)
@@ -133,6 +137,65 @@ def phone(path, height):
     canvas.alpha_composite(sh)
     canvas.alpha_composite(frame, (pad, pad))
     return canvas, pad
+
+# ---------- a scene that scrolls a whole page ----------
+# A scene whose stem is a folder of screenshots (00.png, 01.png, … each the same screen scrolled
+# further down, overlapping the one before) scrolls the phone through the whole page, top to bottom.
+# The app's own screenshot script takes the pieces (Dive log: `scripts/site-screenshots.sh`).
+SCROLL_D = 6.4            # seconds; it holds the top, scrolls, holds the bottom
+CHROME_TOP_PT = 118       # status bar and the strip with the buttons once the page has scrolled
+CHROME_FADE_PT = 40       # the strip's lower edge, where the page fades in under it
+CHROME_BOTTOM_PT = 120    # the tab bar and its shadow
+TAB_BAR_PT = 872         # where the opaque band behind the tab bar begins, points down a 956-point screen
+
+def stitch(folder):
+    """The pieces of one scrolling page as one tall picture, and the chrome that stays put."""
+    paths = sorted(glob.glob(os.path.join(folder, "*.png")))
+    shots = [np.asarray(Image.open(p).convert("RGB")) for p in paths]
+    H = shots[0].shape[0]
+    scale = shots[0].shape[1] / 440
+    y0, y1 = int(CHROME_TOP_PT * scale), H - int(CHROME_BOTTOM_PT * scale)
+    pieces = [shots[0][:y1]]
+    for a, b in zip(shots, shots[1:]):
+        # the shift whose overlapping rows agree best; compared on every 3rd row and 8th column
+        A, B = a[y0:y1:3, ::8].astype(np.int16), b[y0:y1:3, ::8].astype(np.int16)
+        n = A.shape[0]
+        diffs = [np.abs(A[d:] - B[:n - d]).mean() for d in range(0, n - 40)]
+        d = int(np.argmin(diffs)) * 3
+        if d >= 6: pieces.append(b[y1 - d:y1])
+    pieces.append(shots[-1][y1:])
+    page = Image.fromarray(np.concatenate(pieces))
+    top = Image.fromarray(shots[1 if len(shots) > 1 else 0][:y0]).convert("RGBA")
+    fade = int(CHROME_FADE_PT * scale)
+    alpha = Image.new("L", top.size, 255)
+    for y in range(fade):
+        ImageDraw.Draw(alpha).line((0, y0 - fade + y, top.width, y0 - fade + y), fill=int(255 * (1 - y / fade)))
+    top.putalpha(alpha)
+    ty0 = int(TAB_BAR_PT * scale)
+    bar = Image.fromarray(shots[0][ty0:]).convert("RGBA")
+    return page, top, (bar, (0, ty0)), H
+
+def scroll_frames(folder, height, work, index, duration):
+    """The phone at each frame of a scrolling scene, as PNGs; returns the ffmpeg pattern and pad."""
+    page, top, (bar, bar_at), H = stitch(folder)
+    travel = page.height - H
+    frames = round(duration * FPS)
+    hold_top, hold_end = 0.9, 1.3
+    pad = None
+    for f in range(frames):
+        t = f / FPS
+        u = min(max((t - hold_top) / (duration - hold_top - hold_end), 0), 1)
+        u = u * u * (3 - 2 * u)                         # ease in and out
+        y = round(u * travel)
+        screen = page.crop((0, y, page.width, y + H)).convert("RGBA")
+        k = min(y / (150 * page.width / 440), 1)        # the strip comes in as the banner leaves
+        if k > 0:
+            strip = top.copy(); strip.putalpha(strip.getchannel("A").point(lambda a: int(a * k)))
+            screen.alpha_composite(strip)
+        if y < travel: screen.alpha_composite(bar, bar_at)   # the last piece has its own
+        ph, pad = phone(screen, height)
+        ph.save(os.path.join(work, f"scroll-{index}-{f:04d}.png"))
+    return os.path.join(work, f"scroll-{index}-%04d.png"), pad, ph.width
 
 def wrap(draw, text, f, max_w):
     words, lines, cur = text.split(), [], ""
@@ -264,23 +327,30 @@ def build_video(app, name, fmt):
         p = os.path.join(work, "title.png"); title_layer(fmt, app).save(p); layers.append((p, t, TITLE_D, 0, "0")); t += TITLE_D
     for i, (shot, pill, head, sub) in enumerate(app["scenes"], 1):
         phone_left = (i % 2 == 0)
-        ph, pad = phone(os.path.join(app["shots"], shot + ".png"), fmt["phone_h"])
-        p1 = os.path.join(work, f"phone-{i}.png"); ph.save(p1)
-        if W < H:
-            px = (W - ph.width) // 2
+        folder = os.path.join(app["shots"], shot)
+        if os.path.isdir(folder):
+            d = SCROLL_D
+            p1, pad, ph_w = scroll_frames(folder, fmt["phone_h"], work, i, d)
         else:
-            px = (330 - pad) if phone_left else (W - 330 - ph.width + pad)
-        layers.append((p1, t, SCENE_D, px, f"{fmt['phone_top'] - pad}-{fmt['drift']}*clip((t-{t:.2f})/{SCENE_D},0,1)"))
+            d = SCENE_D
+            ph, pad = phone(os.path.join(app["shots"], shot + ".png"), fmt["phone_h"])
+            p1 = os.path.join(work, f"phone-{i}.png"); ph.save(p1); ph_w = ph.width
+        if W < H:
+            px = (W - ph_w) // 2
+        else:
+            px = (330 - pad) if phone_left else (W - 330 - ph_w + pad)
+        layers.append((p1, t, d, px, f"{fmt['phone_top'] - pad}-{fmt['drift']}*clip((t-{t:.2f})/{d},0,1)"))
         p2 = os.path.join(work, f"caption-{i}.png"); caption_layer(fmt, i, pill, head, sub, left=not phone_left).save(p2)
-        layers.append((p2, t, SCENE_D, 0, "0"))
-        t += SCENE_D
+        layers.append((p2, t, d, 0, "0"))
+        t += d
     p = os.path.join(work, "outro.png"); outro_layer(fmt, app).save(p); layers.append((p, t, OUTRO_D, 0, "0")); t += OUTRO_D
     total = t
     cmd = ["ffmpeg", "-y", "-v", "error", "-stats", "-stream_loop", "-1", "-i", os.path.join(BUILD, "bg.mp4")]
     bg_fit = f"[0:v]scale=-2:{H},crop={W}:{H}[bg]" if W < H else f"[0:v]scale={W}:{H}[bg]"
     fc = [bg_fit]
     for k, (path, st, du, x, yexpr) in enumerate(layers, 1):
-        cmd += ["-loop", "1", "-framerate", str(FPS), "-t", f"{du:.2f}", "-i", path]
+        still = [] if "%" in path else ["-loop", "1"]   # a scrolling phone is a run of frames
+        cmd += still + ["-framerate", str(FPS), "-t", f"{du:.2f}", "-i", path]
         fade_out = max(du - FADE, 0)
         fade_in = f"fade=t=in:st=0:d={FADE}:alpha=1," if st > 0 else ""   # the opening frame is never faded: it is the poster
         fc.append(f"[{k}:v]format=rgba,{fade_in}fade=t=out:st={fade_out:.2f}:d={FADE}:alpha=1,"

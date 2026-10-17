@@ -84,6 +84,21 @@ Surface promo Rustam had made on 2026-10-10 (`turn_pressure/build/promo/`). Scen
 are the `APPS` table at the top of the generator; the screenshots are read from each app's
 `design/screenshots/<app>/` (1320×2868, the 6.9" set). Fonts are SF Pro from the system.
 
+**Dive log is the exception** (2026-10-17, Rustam's six key features in his order: the dive on one
+page, super fast navigation, import once from any computer with the merge, SAC per dive and over
+time, dive sites, the social card). Its video reads its own set, `design/screenshots/dive-log-site/`,
+taken by `scripts/site-screenshots.sh` in the app's repo, not the App Store set. In it: his real
+Blue Hole dive (273) labelled **18/45**, his gas for it (the computer logged 21/35; profile and stops
+are the computer's), and a year of **generated sample trips** (`-siteHistory YES` in
+`App/Preview/SampleDives.swift`) so Statistics draws a rate settling from about 25 to 15 L/min —
+his real export's rate is too noisy for that. The merge scene is the app's two-computer seed.
+
+**A scene can scroll a whole page.** When a scene's stem is a folder of pieces (`00.png`, `01.png`, …
+the same screen 500 points further down each time), the generator stitches them, keeps the status
+bar strip and the tab bar band fixed, and scrolls the phone through the page over `SCROLL_D`
+(6.4 s) instead of `SCENE_D`. Dive log's first scene does this; `CHROME_TOP_PT` and `TAB_BAR_PT`
+fit its chrome, so check them before using it for another app.
+
     python3 tools/build-media.py bg          # once, or when the background should change
     python3 tools/build-media.py icons       # icons, favicon, og.png
     python3 tools/build-media.py videos      # all ten videos and posters (~6 min)
@@ -139,7 +154,7 @@ the usual faults:
     ffmpeg -y -ss 6.5 -i video/surface-interval-wide.mp4 -frames:v 1 /tmp/wide.png
     ffmpeg -y -ss 6.5 -i video/surface-interval-tall.mp4 -frames:v 1 /tmp/tall.png
 
-(scene *n* starts at 4.6·(n−1) seconds; add two seconds to land past the fade; scene 1 has no
+(scene *n* starts at 4.6·(n−1) seconds — for Dive log, whose first scene scrolls, 6.4 + 4.6·(n−2); add two seconds to land past the fade; scene 1 has no
 fade-in, its first frame is the poster). Then open
 the page from `.claude/launch.json` and watch the section play at desktop and at phone width,
 commit the changed `video/` and `img/` files with the script, and push.
